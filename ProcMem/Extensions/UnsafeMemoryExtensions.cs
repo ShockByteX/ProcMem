@@ -29,7 +29,7 @@ namespace ProcMem.Extensions
 
                         if (!MarshalCache<T>.TypeRequiresMarshal)
                         {
-                            T obj = default(T);
+                            T obj = default;
                             var ptr = MarshalCache<T>.GetUnsafePtr(ref obj);
                             Kernel32.MoveMemory(ptr, (void*)address, MarshalCache<T>.Size);
                             return obj;
@@ -79,7 +79,7 @@ namespace ProcMem.Extensions
             }
             catch (AccessViolationException)
             {
-                return default(T);
+                return default;
             }
         }
     }

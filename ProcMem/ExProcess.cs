@@ -4,6 +4,7 @@ using System.Diagnostics;
 using ProcMem.Extensions;
 using ProcMem.Memory;
 using ProcMem.Native;
+using ProcMem.Windows.Keyboard;
 
 namespace ProcMem
 {
@@ -32,6 +33,8 @@ namespace ProcMem
             Process.Exited += (s, e) => ProcessExited?.Invoke(this);
         }
         ~ExProcess() => Dispose();
+
+        public static IKeyboard GlobalKeyboard => Keyboard.Instance;
 
         public Process Process { get; }
         public IntPtr Handle { get; }

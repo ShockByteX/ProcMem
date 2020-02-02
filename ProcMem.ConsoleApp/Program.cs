@@ -13,7 +13,7 @@ namespace ProcMem.ConsoleApp
 
         private static readonly Random Random = new Random();
 
-        static void Main(string[] args)
+        static void Main()
         {
             var signature = ParseHelper.BytesFromPattern(Pattern, out var unknownByte);
             Console.WriteLine($"Signature generated: {string.Join(" ", signature)}");
