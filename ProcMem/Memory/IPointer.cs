@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
 
 namespace ProcMem.Memory
@@ -16,5 +17,6 @@ namespace ProcMem.Memory
         void Write<T>(int offset, T value);
         void Write<T>(int offset, T[] values);
         int Write(int offset, byte[] data);
+        IEnumerable<IntPtr> ScanSignature(string pattern, int extra, int offset, bool relative, int size);
     }
 }

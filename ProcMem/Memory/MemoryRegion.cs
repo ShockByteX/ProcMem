@@ -1,45 +1,20 @@
 ﻿using System;
+using System.Collections.Generic;
 using ProcMem.Native;
 using ProcMem.Utilities;
 
 namespace ProcMem.Memory
 {
-    public unsafe class MemoryRegion : MemoryPointer, IEquatable<MemoryRegion>
+    public class MemoryRegion : MemoryPointer, IEquatable<MemoryRegion>
     {
         public MemoryRegion(IMemory memory, IntPtr address) : base(memory, address) { }
 
         public override bool IsValid => base.IsValid && Information.State != MemoryStateFlags.Free;
         public MemoryBasicInformation Information => MemoryHelper.Query(Memory.Handle, Address);
 
-        public IntPtr Scan(string strPattern, int extra, int offset, bool relative)
+        public IEnumerable<IntPtr> ScanSignature(string pattern, int extra, int offset, bool relative)
         {
-            var buffer = Read(0, Information.RegionSize);
-            var pattern = ParseHelper.BytesFromPattern(strPattern, out byte dByte);
-            var pLength = pattern.Length;
-            var endPoint = buffer.Length - pLength + 1;
-
-            fixed (byte* pPattern = pattern, pBuffer = buffer)
-            {
-                for (var i = 0; i < endPoint; i++)
-                {
-                    if (pBuffer[i] == pPattern[0])
-                    {
-                        int j;
-                        for (j = 0; j < pLength; j++)
-                        {
-                            if (pPattern[j] != dByte && pPattern[j] != pBuffer[j + i]) break;
-                        }
-                        if (j != pLength)
-                        {
-                            i += j;
-                            continue;
-                        }
-                        var address = IntPtr.Add(Address, i + extra);
-                        return relative ? IntPtr.Add((IntPtr)Memory.Read<int>(address), offset) : IntPtr.Add(address, offset);
-                    }
-                }
-            }
-            return IntPtr.Zero;
+            return ScanSignature(pattern,extra, offset, relative, Information.RegionSize);
         }
 
         public bool Equals(MemoryRegion other)

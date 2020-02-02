@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
+using ProcMem.Utilities;
 
 namespace ProcMem.Memory
 {
@@ -26,6 +28,24 @@ namespace ProcMem.Memory
         public void Write<T>(int offset, T value) => Memory.Write(IntPtr.Add(Address, offset), value);
         public void Write<T>(int offset, T[] values) => Memory.Write(IntPtr.Add(Address, offset), values);
         public void Write(int offset, string text, Encoding encoding) => Memory.Write(IntPtr.Add(Address, offset), text, encoding);
+
+        public IEnumerable<IntPtr> ScanSignature(string pattern, int extra, int offset, bool relative, int size)
+        {
+            var data = Read(0, size);
+            var signature = ParseHelper.BytesFromPattern(pattern, out var unknownByte);
+
+            var foundOffsets = SignatureScanner.Scan(data, signature, unknownByte);
+            var addresses = new List<IntPtr>();
+
+            foreach (var foundOffset in foundOffsets)
+            {
+                var address = IntPtr.Add(Address, foundOffset + extra);
+                address = relative ? IntPtr.Add(Memory.Read<IntPtr>(address), offset) : IntPtr.Add(address, offset);
+                addresses.Add(address);
+            }
+
+            return addresses;
+        }
 
         public bool Equals(MemoryPointer other) => Address.Equals(other.Address);
 

@@ -1,4 +1,4 @@
-﻿namespace ProcMem
+﻿namespace ProcMem.Memory
 {
     public enum MemoryAccessType : byte
     {

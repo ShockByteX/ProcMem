@@ -24,35 +24,35 @@ namespace ProcMem.Utilities
             }
         }
 
-        public static byte[] BytesFromPattern(string pattern, out byte dByte)
+        public static byte[] BytesFromPattern(string pattern, out byte unknownByte)
         {
             var arrBytes = pattern.Split(' ');
-            dByte = 0x00;
+            unknownByte = 0x00;
 
             for (byte i = 0; i < BytesArray.Length; i++)
             {
                 if (!arrBytes.Contains(BytesArray[i]))
                 {
-                    dByte = i;
+                    unknownByte = i;
                     break;
                 }
             }
 
-            var buffer = new byte[arrBytes.Length];
+            var signature = new byte[arrBytes.Length];
 
             for (var i = 0; i < arrBytes.Length; i++)
             {
                 if (arrBytes[i] == "?")
                 {
-                    buffer[i] = dByte;
+                    signature[i] = unknownByte;
                 }
                 else
                 {
-                    buffer[i] = Convert.ToByte(arrBytes[i], 16);
+                    signature[i] = Convert.ToByte(arrBytes[i], 16);
                 }
             }
 
-            return buffer;
+            return signature;
         }
     }
 }
