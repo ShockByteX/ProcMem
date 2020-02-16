@@ -5,26 +5,26 @@ using ProcMem.Native;
 
 namespace ProcMem.Windows.Keyboard
 {
-    public class Keyboard : IKeyboard
+    public class MessageKeyboard : IKeyboard
     {
-        private static Keyboard _instance;
-        private static readonly object _lock = new object();
+        private static MessageKeyboard _instance;
+        private static readonly object Lock = new object();
 
-        public static Keyboard Instance
+        public static MessageKeyboard Instance
         {
             get
             {
-                lock (_lock)
+                lock (Lock)
                 {
-                    if (_instance == null) _instance = new Keyboard();
-                    return _instance ?? new Keyboard();
+                    if (_instance == null) _instance = new MessageKeyboard();
+                    return _instance ?? new MessageKeyboard();
                 }
             }
         }
 
         private readonly Dictionary<KeyboardKey, short> _keyToScan = new Dictionary<KeyboardKey, short>();
 
-        private Keyboard()
+        private MessageKeyboard()
         {
             var vkValues = Enum.GetValues(typeof(KeyboardKey));
             foreach (KeyboardKey key in vkValues)
@@ -39,7 +39,7 @@ namespace ProcMem.Windows.Keyboard
         public void PressKey(KeyboardKey key) => User32.SendInput(2, new Input[] { GetVirtualKeyInput(key, false), GetVirtualKeyInput(key, true) }, Input.Size);
         public void PressKeys(KeyboardKey[] keys, int delay)
         {
-            foreach (KeyboardKey key in keys)
+            foreach (var key in keys)
             {
                 PressKey(key);
                 Thread.Sleep(delay);
@@ -56,7 +56,7 @@ namespace ProcMem.Windows.Keyboard
             User32.SendInput((uint)inputs.Count, inputs.ToArray(), Input.Size);
         }
 
-        private Input GetUnicodeKeyInput(char c, bool keyUp)
+        private static Input GetUnicodeKeyInput(char c, bool keyUp)
         {
             var input = new Input()
             {

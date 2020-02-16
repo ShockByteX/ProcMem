@@ -4,7 +4,13 @@ namespace ProcMem.Utilities
 {
     public static unsafe class SignatureScanner
     {
-        public static IEnumerable<int> Scan(byte[] data, byte[] signature, byte unknownByte)
+        public static IEnumerable<int> Scan(byte[] data, string pattern, bool firstOnly = true)
+        {
+            var signature = ParseHelper.BytesFromPattern(pattern, out var unknownByte);
+            return Scan(data, signature, unknownByte, firstOnly);
+        }
+
+        public static IEnumerable<int> Scan(byte[] data, byte[] signature, byte unknownByte, bool firstOnly = true)
         {
             var endPoint = data.Length - signature.Length - 1;
             var sigByte = signature[0];
@@ -14,13 +20,15 @@ namespace ProcMem.Utilities
 
             fixed (byte* ptrData = data, ptrSignature = signature)
             {
-                for (int i = 0; i < endPoint; i++)
+                for (var i = 0; i < endPoint; i++)
                 {
                     if (sigByte.Equals(ptrData[i]))
                     {
                         if (SequenceEquals(ptrData, ptrSignature, unknownByte, i, sigLength))
                         {
                             offsets.Add(i);
+
+                            if (firstOnly) return offsets;
                         }
                     }
                 }
@@ -31,7 +39,7 @@ namespace ProcMem.Utilities
 
         private static bool SequenceEquals(byte* ptrData, byte* ptrSignature, byte unknownByte, int index, int length)
         {
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 if (ptrSignature[i] == unknownByte) continue;
                 if (ptrSignature[i] != ptrData[index + i]) return false;

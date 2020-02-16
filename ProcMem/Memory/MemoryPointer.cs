@@ -32,9 +32,8 @@ namespace ProcMem.Memory
         public IEnumerable<IntPtr> ScanSignature(string pattern, int extra, int offset, bool relative, int size)
         {
             var data = Read(0, size);
-            var signature = ParseHelper.BytesFromPattern(pattern, out var unknownByte);
 
-            var foundOffsets = SignatureScanner.Scan(data, signature, unknownByte);
+            var foundOffsets = SignatureScanner.Scan(data, pattern);
             var addresses = new List<IntPtr>();
 
             foreach (var foundOffset in foundOffsets)

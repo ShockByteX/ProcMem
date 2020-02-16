@@ -5,6 +5,7 @@ using ProcMem.Extensions;
 using ProcMem.Memory;
 using ProcMem.Native;
 using ProcMem.Windows.Keyboard;
+using ProcMem.Windows.Mouse;
 
 namespace ProcMem
 {
@@ -34,23 +35,37 @@ namespace ProcMem
         }
         ~ExProcess() => Dispose();
 
-        public static IKeyboard GlobalKeyboard => Keyboard.Instance;
+        public static IKeyboard GlobalKeyboard => MessageKeyboard.Instance;
+        public static IMouse GlobalMouse => MessageMouse.Instance;
 
         public Process Process { get; }
         public IntPtr Handle { get; }
         public IMemory Memory { get; }
         public IPointer this[IntPtr address] => new MemoryPointer(Memory, address);
 
-        public IReadOnlyCollection<MemoryRegion> GetMemoryRegions()
+        public IEnumerable<MemoryRegion> GetMemoryRegions()
         {
             var regions = new List<MemoryRegion>();
-
-            Kernel32.GetSystemInfo(out var sysInfo);
-
             var currentAddress = IntPtr.Zero;
 
             while (Kernel32.VirtualQueryEx(Handle, currentAddress, out var info, MemoryBasicInformation.StructSize) > 0)
             {
+                regions.Add(new MemoryRegion(Memory, currentAddress));
+                currentAddress = info.BaseAddress + info.RegionSize;
+            }
+
+            return regions;
+        }
+
+        public IEnumerable<MemoryRegion> GetMemoryRegions(IntPtr address, int size)
+        {
+            var regions = new List<MemoryRegion>();
+            var currentAddress = address;
+            var endAddress = IntPtr.Add(address, size);
+
+            while (currentAddress.ToInt64() < endAddress.ToInt64())
+            {
+                Kernel32.VirtualQueryEx(Handle, currentAddress, out var info, MemoryBasicInformation.StructSize);
                 regions.Add(new MemoryRegion(Memory, currentAddress));
                 currentAddress = info.BaseAddress + info.RegionSize;
             }

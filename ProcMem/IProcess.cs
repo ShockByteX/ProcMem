@@ -11,6 +11,7 @@ namespace ProcMem
         IntPtr Handle { get; }
         IMemory Memory { get; }
         IPointer this[IntPtr address] { get; }
-        IReadOnlyCollection<MemoryRegion> GetMemoryRegions();
+        IEnumerable<MemoryRegion> GetMemoryRegions();
+        IEnumerable<MemoryRegion> GetMemoryRegions(IntPtr address, int size);
     }
 }

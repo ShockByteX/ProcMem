@@ -41,8 +41,16 @@ namespace ProcMem.Windows.Keyboard
                 if (code >= 0)
                 {
                     var key = (VirtualKey)Marshal.ReadInt32(new IntPtr(lParam.VirtualKey));
-                    if (wParam == WindowMessages.KeyDown || wParam == WindowMessages.SysKeyDown) KeyDown?.Invoke(this, key);
-                    if (wParam == WindowMessages.KeyUp || wParam == WindowMessages.SysKeyUp) KeyUp?.Invoke(this, key);
+
+                    if (wParam == WindowMessages.KeyDown || wParam == WindowMessages.SysKeyDown)
+                    {
+                        KeyDown?.Invoke(this, key);
+                    }
+
+                    if (wParam == WindowMessages.KeyUp || wParam == WindowMessages.SysKeyUp)
+                    {
+                        KeyUp?.Invoke(this, key);
+                    }
                 }
             }
             finally

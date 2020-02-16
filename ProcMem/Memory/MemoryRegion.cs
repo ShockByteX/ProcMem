@@ -11,10 +11,27 @@ namespace ProcMem.Memory
 
         public override bool IsValid => base.IsValid && Information.State != MemoryStateFlags.Free;
         public MemoryBasicInformation Information => MemoryHelper.Query(Memory.Handle, Address);
+        public bool IsReadable
+        {
+            get
+            {
+                return true;
+                //return Information.MemoryProtection == MemoryProtectionFlags.NoAccess;
+                //switch (Information.MemoryProtection)
+                //{
+                //    case MemoryProtectionFlags.ReadOnly:
+                //    case MemoryProtectionFlags.ReadWrite:
+                //    case MemoryProtectionFlags.ExecuteRead:
+                //    case MemoryProtectionFlags.ExecuteReadWrite:
+                //        return true;
+                //    default: return false;
+                //}
+            }
+        }
 
         public IEnumerable<IntPtr> ScanSignature(string pattern, int extra, int offset, bool relative)
         {
-            return ScanSignature(pattern,extra, offset, relative, Information.RegionSize);
+            return ScanSignature(pattern, extra, offset, relative, Information.RegionSize);
         }
 
         public bool Equals(MemoryRegion other)

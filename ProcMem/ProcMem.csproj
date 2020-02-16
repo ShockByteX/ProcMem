@@ -44,6 +44,7 @@
     <Compile Include="Marshaling\MarshalCache.cs" />
     <Compile Include="Marshaling\MarshalType.cs" />
     <Compile Include="Memory\IMemory.cs" />
+    <Compile Include="Memory\IMemoryScanner.cs" />
     <Compile Include="Memory\IPointer.cs" />
     <Compile Include="Memory\MemoryAccessType.cs" />
     <Compile Include="Memory\MemoryObject.cs" />
@@ -67,10 +68,12 @@
     <Compile Include="Utilities\ParseHelper.cs" />
     <Compile Include="Utilities\SignatureScanner.cs" />
     <Compile Include="Windows\Keyboard\IKeyboard.cs" />
-    <Compile Include="Windows\Keyboard\Keyboard.cs" />
+    <Compile Include="Windows\Keyboard\MessageKeyboard.cs" />
     <Compile Include="Windows\Keyboard\KeyboardExtensions.cs" />
     <Compile Include="Windows\Keyboard\KeyboardHook.cs" />
     <Compile Include="Windows\Keyboard\KeyboardKey.cs" />
+    <Compile Include="Windows\Mouse\IMouse.cs" />
+    <Compile Include="Windows\Mouse\MessageMouse.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

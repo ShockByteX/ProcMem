@@ -16,9 +16,24 @@ namespace ProcMem.Marshaling
         static MarshalType()
         {
             RealType = typeof(T);
-            IsIntPtr = RealType == typeof(IntPtr);
-            Size = TypeCode == TypeCode.Boolean ? 1 : Marshal.SizeOf(RealType);
             TypeCode = Type.GetTypeCode(RealType);
+            IsIntPtr = RealType == typeof(IntPtr);
+
+            if (TypeCode == TypeCode.Boolean)
+            {
+                Size = 1;
+            }
+            else if (RealType.IsEnum)
+            {
+                RealType = RealType.GetEnumUnderlyingType();
+                TypeCode = Type.GetTypeCode(RealType);
+                Size = Marshal.SizeOf(RealType);
+            }
+            else
+            {
+                Size = Marshal.SizeOf(RealType);
+            }
+
             CanBeStoredInRegisters = IsIntPtr ||
                                      TypeCode == TypeCode.Boolean || TypeCode == TypeCode.Char ||
                                      TypeCode == TypeCode.Byte || TypeCode == TypeCode.SByte ||

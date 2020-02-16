@@ -23,7 +23,7 @@ namespace ProcMem.Native
     [StructLayout(LayoutKind.Sequential)]
     public struct MouseInput
     {
-        public int DX, DY, MouseData;
+        public int DeltaX, DeltaY, MouseData;
         public MouseEventF DwFlags;
         public uint Time;
         public UIntPtr DwExtraInfo;

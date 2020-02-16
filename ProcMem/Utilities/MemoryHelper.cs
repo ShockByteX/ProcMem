@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using ProcMem.Memory;
 using ProcMem.Native;
 
 namespace ProcMem.Utilities
