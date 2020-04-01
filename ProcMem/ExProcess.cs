@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
+using System.Threading.Tasks;
 using ProcMem.Extensions;
 using ProcMem.Memory;
 using ProcMem.Native;
+using ProcMem.Utilities;
 using ProcMem.Windows.Keyboard;
 using ProcMem.Windows.Mouse;
 
@@ -28,6 +31,7 @@ namespace ProcMem
                 case MemoryAccessType.Remote:
                     Memory = new ProcessMemoryRemote(Handle);
                     break;
+                default: throw new NotSupportedException();
             }
 
             Process.EnableRaisingEvents = true;
@@ -46,12 +50,16 @@ namespace ProcMem
         public IEnumerable<MemoryRegion> GetMemoryRegions()
         {
             var regions = new List<MemoryRegion>();
+
+            Kernel32.GetSystemInfo(out var systemInfo);
+
+            var maxAddress = (long)systemInfo.MaximumApplicationAddress;
             var currentAddress = IntPtr.Zero;
 
-            while (Kernel32.VirtualQueryEx(Handle, currentAddress, out var info, MemoryBasicInformation.StructSize) > 0)
+            while (MemoryHelper.Query(Handle, currentAddress, out var info) > 0 && currentAddress.ToInt64() < maxAddress)
             {
                 regions.Add(new MemoryRegion(Memory, currentAddress));
-                currentAddress = info.BaseAddress + info.RegionSize;
+                currentAddress = info.BaseAddress.Add(info.RegionSize);
             }
 
             return regions;
@@ -65,48 +73,40 @@ namespace ProcMem
 
             while (currentAddress.ToInt64() < endAddress.ToInt64())
             {
-                Kernel32.VirtualQueryEx(Handle, currentAddress, out var info, MemoryBasicInformation.StructSize);
+                MemoryHelper.Query(Handle, currentAddress, out var info);
                 regions.Add(new MemoryRegion(Memory, currentAddress));
-                currentAddress = info.BaseAddress + info.RegionSize;
+                currentAddress = info.BaseAddress + (int)info.RegionSize;
             }
 
             return regions;
         }
 
-        public unsafe IEnumerable<IntPtr> Scan(IntPtr address, int size, byte[] data, int extra, int offset, bool relative, int dByte = 0x0)
+        public IEnumerable<IntPtr> ScanSignature(string pattern, int extra, int offset, bool relative, bool firstOnly = true)
         {
-            var addresses = new List<IntPtr>();
-            var buffer = Memory.Read(address, size);
+            var regions = GetMemoryRegions().Where(x => x.Readable);
+            var result = new List<IntPtr>();
 
-            var endPoint = buffer.Length - data.Length + 1;
-            var sigByte = data[0];
-
-            fixed (byte* ptrData = data, ptrBuffer = buffer)
+            Parallel.ForEach(regions, (region) =>
             {
-                for (var i = 0; i < endPoint; i++)
-                {
-                    if (sigByte.Equals(ptrBuffer[i]))
-                    {
-                        int j;
+                var data = Memory.Read(region.Address, (int)region.Information.RegionSize);
 
-                        for (j = 0; j < data.Length; j++)
-                        {
-                            if (ptrData[j] != dByte && ptrData[j] != ptrBuffer[j + i]) break;
-                        }
+                result.AddRange(SignatureScanner.Scan(data, pattern, firstOnly).Select(x =>
+                 {
+                     var address = IntPtr.Add(region.Address, x + offset);
 
-                        if (j != data.Length)
-                        {
-                            i += j;
-                            continue;
-                        }
+                     if (relative)
+                     {
+                         address = Memory.Read<IntPtr>(address);
+                     }
 
-                        var pointer = IntPtr.Add(address, i + extra);
-                        addresses.Add(IntPtr.Add(relative ? Memory.Read<IntPtr>(pointer) : pointer, offset));
-                    }
-                }
-            }
+                     return IntPtr.Add(address, extra);
+                 }));
 
-            return addresses;
+            });
+
+            GC.Collect();
+
+            return result;
         }
 
         public void Dispose()

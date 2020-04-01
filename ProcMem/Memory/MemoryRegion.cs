@@ -10,28 +10,44 @@ namespace ProcMem.Memory
         public MemoryRegion(IMemory memory, IntPtr address) : base(memory, address) { }
 
         public override bool IsValid => base.IsValid && Information.State != MemoryStateFlags.Free;
-        public MemoryBasicInformation Information => MemoryHelper.Query(Memory.Handle, Address);
-        public bool IsReadable
+
+        public MemoryBasicInformation Information
         {
             get
             {
-                return true;
-                //return Information.MemoryProtection == MemoryProtectionFlags.NoAccess;
-                //switch (Information.MemoryProtection)
-                //{
-                //    case MemoryProtectionFlags.ReadOnly:
-                //    case MemoryProtectionFlags.ReadWrite:
-                //    case MemoryProtectionFlags.ExecuteRead:
-                //    case MemoryProtectionFlags.ExecuteReadWrite:
-                //        return true;
-                //    default: return false;
-                //}
+                MemoryHelper.Query(Memory.Handle, Address, out var memoryInfo);
+                return memoryInfo;
             }
+           
         }
 
-        public IEnumerable<IntPtr> ScanSignature(string pattern, int extra, int offset, bool relative)
+        public bool Readable =>
+            Information.MemoryProtection == MemoryProtectionFlags.ReadOnly ||
+            Information.MemoryProtection == MemoryProtectionFlags.ReadWrite ||
+            Information.MemoryProtection == MemoryProtectionFlags.ExecuteRead ||
+            Information.MemoryProtection == MemoryProtectionFlags.ExecuteReadWrite;
+
+        public bool Writable =>
+            Information.MemoryProtection == MemoryProtectionFlags.ReadWrite ||
+            Information.MemoryProtection == MemoryProtectionFlags.WriteCopy ||
+            Information.MemoryProtection == MemoryProtectionFlags.ExecuteReadWrite ||
+            Information.MemoryProtection == MemoryProtectionFlags.ExecuteWriteCopy ||
+            Information.MemoryProtection == MemoryProtectionFlags.WriteCombine;
+
+        public bool Executable =>
+            Information.MemoryProtection == MemoryProtectionFlags.Execute ||
+            Information.MemoryProtection == MemoryProtectionFlags.ExecuteRead ||
+            Information.MemoryProtection == MemoryProtectionFlags.ExecuteReadWrite ||
+            Information.MemoryProtection == MemoryProtectionFlags.ExecuteWriteCopy ||
+            Information.MemoryProtection == MemoryProtectionFlags.WriteCombine;
+
+        public bool Guarded => Information.MemoryProtection.HasFlag(MemoryProtectionFlags.Guard);
+
+        public bool Valid => (Readable | Writable | Executable) && Guarded;
+
+        public IEnumerable<IntPtr> ScanSignature(string pattern, int offset, int extra, bool relative, bool firstOnly)
         {
-            return ScanSignature(pattern, extra, offset, relative, Information.RegionSize);
+            return ScanSignature(pattern, (int)Information.RegionSize, offset, extra, relative, firstOnly);
         }
 
         public bool Equals(MemoryRegion other)
@@ -45,9 +61,15 @@ namespace ProcMem.Memory
         public override int GetHashCode() => Address.GetHashCode() ^ Information.RegionSize.GetHashCode();
         public override bool Equals(object obj)
         {
-            if (ReferenceEquals(null, obj)) return false;
-            if (obj is MemoryRegion region) return Equals(region);
-            return false;
+            switch (obj)
+            {
+                case null: 
+                    return false;
+                case MemoryRegion region: 
+                    return Equals(region);
+                default:
+                    return false;
+            }
         }
 
         public static bool operator ==(MemoryRegion left, MemoryRegion right) => Equals(left, right);

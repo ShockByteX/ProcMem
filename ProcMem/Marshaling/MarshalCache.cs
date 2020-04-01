@@ -10,7 +10,9 @@ namespace ProcMem.Marshaling
     public static class MarshalCache<T>
     {
         public unsafe delegate void* GetUnsafePtrDelegate(ref T value);
+
         public static readonly GetUnsafePtrDelegate GetUnsafePtr;
+
         public static int Size;
         public static Type RealType;
         public static TypeCode TypeCode;

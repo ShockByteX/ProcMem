@@ -24,8 +24,11 @@ namespace ProcMem.Native
         [DllImport(LibraryName, ExactSpelling = true)]
         public static extern bool VirtualProtectEx(IntPtr hProcess, IntPtr lpAddress, int dwSize, MemoryProtectionFlags flNewProtect, out MemoryProtectionFlags lpflOldProtect);
 
-        [DllImport(LibraryName, ExactSpelling = true)]
-        public static extern int VirtualQueryEx(IntPtr hProcess, IntPtr lpAddress, out MemoryBasicInformation lpBuffer, int dwLength);
+        [DllImport(LibraryName, EntryPoint = "VirtualQueryEx")]
+        public static extern int VirtualQueryEx32(IntPtr hProcess, IntPtr lpAddress, out MemoryBasicInformation32 lpBuffer, int dwLength);
+
+        [DllImport(LibraryName, EntryPoint = "VirtualQueryEx")]
+        public static extern int VirtualQueryEx64(IntPtr hProcess, IntPtr lpAddress, out MemoryBasicInformation64 lpBuffer, int dwLength);
 
         [DllImport(LibraryName, EntryPoint = "RtlMoveMemory", SetLastError = false)]
         public static extern void MoveMemory(void* dest, void* src, int size);
@@ -40,5 +43,25 @@ namespace ProcMem.Native
 
         [DllImport(LibraryName)]
         public static extern void GetSystemInfo(out SystemInfo lpSystemInfo);
+
+        public static int VirtualQueryEx(IntPtr hProcess, IntPtr lpAddress, out MemoryBasicInformation lpBuffer)
+        {
+            int result;
+
+            switch (IntPtr.Size)
+            {
+                case 4:
+                    result = VirtualQueryEx32(hProcess, lpAddress, out var memoryInfo32, MemoryBasicInformation32.StructSize);
+                    lpBuffer = memoryInfo32;
+                    break;
+                case 8:
+                    result = VirtualQueryEx64(hProcess, lpAddress, out var memoryInfo64, MemoryBasicInformation64.StructSize);
+                    lpBuffer = memoryInfo64;
+                    break;
+                default: throw new NotSupportedException();
+            }
+
+            return result;
+        }
     }
 }

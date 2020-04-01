@@ -17,7 +17,7 @@ namespace ProcMem.Memory
         public abstract T Read<T>(IntPtr address);
         public T[] Read<T>(IntPtr address, int length)
         {
-            T[] values = new T[length];
+            var values = new T[length];
 
             for (var i = 0; i < length; i++)
             {
@@ -31,6 +31,7 @@ namespace ProcMem.Memory
         {
             var text = encoding.GetString(Read(address, maxLength));
             var ntIndex = text.IndexOf(NullTerminator);
+
             return ntIndex != -1 ? text.Remove(ntIndex) : text;
         }
         public string Read(IntPtr address, Encoding encoding)
@@ -53,6 +54,7 @@ namespace ProcMem.Memory
         public void Write<T>(IntPtr address, T[] values)
         {
             var length = values.Length;
+
             for (var i = 0; i < length; i++)
             {
                 Write(IntPtr.Add(address, i * MarshalType<T>.Size), values[i]);

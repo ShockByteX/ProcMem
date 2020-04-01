@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using ProcMem.Utilities;
 
@@ -29,32 +30,35 @@ namespace ProcMem.Memory
         public void Write<T>(int offset, T[] values) => Memory.Write(IntPtr.Add(Address, offset), values);
         public void Write(int offset, string text, Encoding encoding) => Memory.Write(IntPtr.Add(Address, offset), text, encoding);
 
-        public IEnumerable<IntPtr> ScanSignature(string pattern, int extra, int offset, bool relative, int size)
+        public IEnumerable<IntPtr> ScanSignature(string pattern, int size, int offset, int extra, bool relative, bool firstOnly = true)
         {
-            var data = Read(0, size);
-
-            var foundOffsets = SignatureScanner.Scan(data, pattern);
-            var addresses = new List<IntPtr>();
-
-            foreach (var foundOffset in foundOffsets)
+            var addresses = SignatureScanner.Scan(Read(0, size), pattern).Select(x =>
             {
-                var address = IntPtr.Add(Address, foundOffset + extra);
-                address = relative ? IntPtr.Add(Memory.Read<IntPtr>(address), offset) : IntPtr.Add(address, offset);
-                addresses.Add(address);
-            }
+                var address = IntPtr.Add(Address, x + offset);
+
+                if (relative)
+                {
+                    address = Memory.Read<IntPtr>(address);
+                }
+
+                return IntPtr.Add(address, extra);
+            });
 
             return addresses;
         }
 
-        public bool Equals(MemoryPointer other) => Address.Equals(other.Address);
+        public bool Equals(MemoryPointer other) => other != null && Address.Equals(other.Address);
 
         public override int GetHashCode() => Address.GetHashCode();
         public override string ToString() => $"Address: 0x{Address.ToInt64():X}";
         public override bool Equals(object obj)
         {
-            if (ReferenceEquals(obj, null)) return false;
-            if (obj is MemoryPointer pointer) return Equals(pointer);
-            return false;
+            switch (obj)
+            {
+                case null: return false;
+                case MemoryPointer pointer: return Equals(pointer);
+                default: return false;
+            }
         }
 
         public static bool operator ==(MemoryPointer left, MemoryPointer right) => Equals(left, right);

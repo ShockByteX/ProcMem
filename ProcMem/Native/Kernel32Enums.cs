@@ -22,7 +22,7 @@ namespace ProcMem.Native
     }
 
     [Flags]
-    public enum MemoryProtectionFlags
+    public enum MemoryProtectionFlags : uint
     {
         ZeroAccess = 0x0,
         NoAccess = 0x1,
@@ -39,7 +39,7 @@ namespace ProcMem.Native
     }
 
     [Flags]
-    public enum MemoryStateFlags
+    public enum MemoryStateFlags : uint
     {
         Commit = 0x1000,
         Free = 0x10000,
@@ -47,7 +47,7 @@ namespace ProcMem.Native
     }
 
     [Flags]
-    public enum MemoryTypeFlags
+    public enum MemoryTypeFlags : uint
     {
         None = 0x0,
         Image = 0x1000000,

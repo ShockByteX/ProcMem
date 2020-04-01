@@ -17,6 +17,6 @@ namespace ProcMem.Memory
         void Write<T>(int offset, T value);
         void Write<T>(int offset, T[] values);
         int Write(int offset, byte[] data);
-        IEnumerable<IntPtr> ScanSignature(string pattern, int extra, int offset, bool relative, int size);
+        IEnumerable<IntPtr> ScanSignature(string pattern, int size, int extra, int offset, bool relative, bool firstOnly = true);
     }
 }

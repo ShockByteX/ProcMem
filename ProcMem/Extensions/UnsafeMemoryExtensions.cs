@@ -73,8 +73,9 @@ namespace ProcMem.Extensions
                     case TypeCode.Double:
                         ptrToStructure = *(double*)address;
                         break;
-                    default: throw new ArgumentOutOfRangeException();
+                    default: throw new NotSupportedException();
                 }
+
                 return (T)ptrToStructure;
             }
             catch (AccessViolationException)

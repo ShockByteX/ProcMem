@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using ProcMem.Native;
 using ProcMem.Utilities;
 
@@ -20,30 +21,17 @@ namespace ProcMem.Memory
 
         public IEnumerable<IntPtr> ScanSignature(string pattern, int offset, int extra, bool relative, bool firstOnly = true)
         {
-            var foundOffsets = SignatureScanner.Scan(Data, pattern, firstOnly);
-            var addresses = new List<IntPtr>();
-
-            foreach (var foundOffset in foundOffsets)
+            var addresses = SignatureScanner.Scan(Data, pattern, firstOnly).Select(x =>
             {
-                var address = IntPtr.Add(Address, foundOffset + offset);
-                address = IntPtr.Add(ExProcess.Memory.Read<IntPtr>(address), extra);
-                addresses.Add(relative ? address : address);
-            }
+                var address = IntPtr.Add(Address, x + offset);
 
-            return addresses;
-        }
+                if (relative)
+                {
+                    address = ExProcess.Memory.Read<IntPtr>(address);
+                }
 
-        public IEnumerable<IntPtr> ScanSignature(byte[] signature, byte unknownByte, int extra, int offset, bool relative)
-        {
-            var foundOffsets = SignatureScanner.Scan(Data, signature, unknownByte);
-            var addresses = new List<IntPtr>();
-
-            foreach (var foundOffset in foundOffsets)
-            {
-                var address = IntPtr.Add(Address, foundOffset + extra);
-                address = relative ? IntPtr.Add(ExProcess.Memory.Read<IntPtr>(address), offset) : IntPtr.Add(address, offset);
-                addresses.Add(address);
-            }
+                return IntPtr.Add(address, extra);
+            });
 
             return addresses;
         }
@@ -56,9 +44,15 @@ namespace ProcMem.Memory
 
         public override bool Equals(object obj)
         {
-            if (obj is null) return false;
-            if (obj is MemorySnapshot snapshot) return Equals(snapshot);
-            return false;
+            switch (obj)
+            {
+                case null:
+                    return false;
+                case MemorySnapshot snapshot:
+                    return Equals(snapshot);
+                default:
+                    return false;
+            }
         }
         public override int GetHashCode() => Address.GetHashCode() ^ Data.Length.GetHashCode();
         public override string ToString() => $"Address: 0x{Address.ToInt64():X}, Size: {Data.Length}";
@@ -74,9 +68,9 @@ namespace ProcMem.Memory
 
                 foreach (var memoryRegion in memoryRegions)
                 {
-                    if (!memoryRegion.IsReadable) continue;
+                    if (!memoryRegion.Readable) continue;
 
-                    var buffer = memoryRegion.Read(0, memoryRegion.Information.RegionSize);
+                    var buffer = memoryRegion.Read(0, (int)memoryRegion.Information.RegionSize);
                     var offset = memoryRegion.Address.ToInt64() - address.ToInt64();
 
                     fixed (byte* ptrBuffer = buffer)
@@ -86,12 +80,6 @@ namespace ProcMem.Memory
                 }
             }
 
-            return new MemorySnapshot(exProcess, address, data);
-        }
-
-        public static MemorySnapshot Create(IProcess exProcess, IntPtr address, int size, bool forced)
-        {
-            var data = exProcess[address].Read(0, size);
             return new MemorySnapshot(exProcess, address, data);
         }
     }

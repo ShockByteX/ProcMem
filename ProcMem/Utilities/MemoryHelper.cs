@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using ProcMem.Memory;
 using ProcMem.Native;
 
 namespace ProcMem.Utilities
@@ -19,11 +17,14 @@ namespace ProcMem.Utilities
 
             throw new Win32Exception($"Couldn't read from 0x{address.ToInt64():X}.");
         }
+
         public static int WriteProcessMemory(IntPtr hProcess, IntPtr address, byte[] data)
         {
-            Kernel32.VirtualProtectEx(hProcess, address, data.Length, MemoryProtectionFlags.ExecuteReadWrite, out var oldProtection);
+            Kernel32.VirtualProtectEx(hProcess, address, data.Length, MemoryProtectionFlags.ExecuteReadWrite,
+                out var oldProtection);
 
-            if (Kernel32.WriteProcessMemory(hProcess, address, data, data.Length, out int nbBytesWritten) && nbBytesWritten == data.Length)
+            if (Kernel32.WriteProcessMemory(hProcess, address, data, data.Length, out int nbBytesWritten) &&
+                nbBytesWritten == data.Length)
             {
                 Kernel32.VirtualProtectEx(hProcess, address, data.Length, oldProtection, out oldProtection);
                 return nbBytesWritten;
@@ -39,7 +40,7 @@ namespace ProcMem.Utilities
 
             fixed (byte* ptrData = data)
             {
-                Msvcrt.memcpy((IntPtr)ptrData, address, length);
+                Msvcrt.memcpy((IntPtr) ptrData, address, length);
             }
 
             return data;
@@ -47,11 +48,12 @@ namespace ProcMem.Utilities
 
         public static int WriteMemory(IntPtr hProcess, IntPtr address, byte[] data)
         {
-            Kernel32.VirtualProtectEx(hProcess, address, data.Length, MemoryProtectionFlags.ExecuteReadWrite, out MemoryProtectionFlags oldProtection);
+            Kernel32.VirtualProtectEx(hProcess, address, data.Length, MemoryProtectionFlags.ExecuteReadWrite,
+                out MemoryProtectionFlags oldProtection);
 
             fixed (byte* ptrData = data)
             {
-                Msvcrt.memcpy(address, (IntPtr)ptrData, data.Length);
+                Msvcrt.memcpy(address, (IntPtr) ptrData, data.Length);
             }
 
             Kernel32.VirtualProtectEx(hProcess, address, data.Length, oldProtection, out oldProtection);
@@ -60,17 +62,16 @@ namespace ProcMem.Utilities
 
         public static MemoryProtectionFlags GetMemoryProtection(IntPtr hProcess, IntPtr address)
         {
-            Kernel32.VirtualQueryEx(hProcess, address, out var memoryInfo, MemoryBasicInformation.StructSize);
+            Kernel32.VirtualQueryEx(hProcess, address, out var memoryInfo);
+
             return memoryInfo.MemoryProtection;
         }
 
-        public static MemoryBasicInformation Query(IntPtr hProcess, IntPtr address)
+        public static int Query(IntPtr hProcess, IntPtr address, out MemoryBasicInformation memoryInfo)
         {
-            if (Kernel32.VirtualQueryEx(hProcess, address, out var memoryInfo, MemoryBasicInformation.StructSize) != 0)
-            {
-                return memoryInfo;
-            }
-            throw new Win32Exception($"Couldn't query information about the memory region 0x{address.ToInt64():X}");
+            var queryResult = Kernel32.VirtualQueryEx(hProcess, address, out memoryInfo);
+
+            return queryResult;
         }
     }
 }

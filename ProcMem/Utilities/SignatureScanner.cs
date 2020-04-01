@@ -7,6 +7,7 @@ namespace ProcMem.Utilities
         public static IEnumerable<int> Scan(byte[] data, string pattern, bool firstOnly = true)
         {
             var signature = ParseHelper.BytesFromPattern(pattern, out var unknownByte);
+
             return Scan(data, signature, unknownByte, firstOnly);
         }
 
@@ -22,15 +23,12 @@ namespace ProcMem.Utilities
             {
                 for (var i = 0; i < endPoint; i++)
                 {
-                    if (sigByte.Equals(ptrData[i]))
-                    {
-                        if (SequenceEquals(ptrData, ptrSignature, unknownByte, i, sigLength))
-                        {
-                            offsets.Add(i);
+                    if (!sigByte.Equals(ptrData[i])) continue;
+                    if (!SequenceEquals(ptrData, ptrSignature, unknownByte, i, sigLength)) continue;
 
-                            if (firstOnly) return offsets;
-                        }
-                    }
+                    offsets.Add(i);
+
+                    if (firstOnly) return offsets;
                 }
             }
 
